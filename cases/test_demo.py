@@ -1,15 +1,15 @@
-import pytest
+# import pytest
 import requests
 
-@pytest.fixture(scope="session")
-def post_response():
-    # 准备：发送一次POST请求，把响应对象交给用例使用
-    print("\n>>>fixture被执行了")
-    return requests.post("https://httpbin.org/post", json={"username": "test"})
+# @pytest.fixture
+# def post_response():
+#     # 准备：发送一次POST请求，把响应对象交给用例使用
+#     print("\n>>>fixture被执行了")
+#     return requests.post("https://httpbin.org/post", json={"username": "test"})
 
-@pytest.fixture(scope="session")
-def post_response_status(post_response):
-    assert post_response.status_code == 200, f"实际状态码：{post_response.status_code}"
+# @pytest.fixture
+# def post_response_status(post_response):
+#     assert post_response.status_code == 200, f"实际状态码：{post_response.status_code}"
     
     
     
