@@ -1,4 +1,4 @@
-# import pytest
+import pytest
 import requests
 
 # @pytest.fixture
@@ -28,9 +28,14 @@ def test_post_echo(post_response):
     assert body["json"]["username"] == "test", f"实际回显 {body['json']}"
 
 
-def test_post_form():
+@pytest.mark.parametrize("form_value,expected", [
+    pytest.param("1", "1",id="数字"),
+    pytest.param("2", "2",id="数字"),
+    pytest.param("abc", "abc",id="字母"),
+])
+def test_post_form(form_value, expected):
     '''验证data= 传参走的是表单格式'''
-    response=requests.post("https://httpbin.org/post", data={"a": "1"})
+    response=requests.post("https://httpbin.org/post", data={"a": form_value})
     body=response.json()
-    assert body["form"]["a"]=="1",f"实际回显{body['form']['a']}"
+    assert body["form"]["a"]==expected,f"实际回显{body['form']['a']}"
     assert "x-www-form-urlencoded" in body["headers"]["Content-Type"]
