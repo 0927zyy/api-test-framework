@@ -1,4 +1,5 @@
 import pytest
+import yaml
 # import requests
 
 # @pytest.fixture
@@ -53,11 +54,20 @@ def test_post_echo(api):
     body=res.json()
     assert body["json"]["username"]=="test",f"实际回显：{body['json']}"
     
-@pytest.mark.parametrize("form_value,expected", [
-    pytest.param("1", "1",id="数字"),
-    pytest.param("2", "2",id="数字"),
-    pytest.param("abc", "abc",id="字母")
-])
+
+
+def load_form_cases():
+    # 从yaml数据文件读取表单接口的测试数据
+    with open("data/httpbin_data.yaml","r",encoding='utf-8') as f:
+        raw=yaml.safe_load(f)["post_form_cases"] #取出列表
+        
+    cases=[]
+    for item in raw:
+        cases.append(
+            pytest.param(item["form_value"],item["excepted"],id=item["case_name"])
+        )
+    return cases
+@pytest.mark.parametrize("form_value,expected", load_form_cases())
 def test_post_form(api,form_value,expected):
     # 参数化， 传参走的是表单格式
     res=api.post_form({"a":form_value})

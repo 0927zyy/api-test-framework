@@ -1,0 +1,12 @@
+# 表单接口测试数据
+post_form_cases:
+  - form_value: "1"
+    excepted: "1"
+    case_name: digit_1
+  - form_value: "2"
+    excepted: "2"
+    case_name: digit_2
+  - form_value: "3"
+    excepted: "3"   
+    case_name: alpha
+    
