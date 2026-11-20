@@ -1,75 +1,73 @@
+import allure
 import pytest
 import yaml
-# import requests
-
-# @pytest.fixture
-# def post_response():
-#     # 准备：发送一次POST请求，把响应对象交给用例使用
-#     print("\n>>>fixture被执行了")
-#     return requests.post("https://httpbin.org/post", json={"username": "test"})
-
-# @pytest.fixture
-# def post_response_status(post_response):
-#     assert post_response.status_code == 200, f"实际状态码：{post_response.status_code}"
-    
-    
-'''    
-def test_post_status(post_response):
-    """验证状态码是 200"""
-    # response = requests.post("https://httpbin.org/post", json={"username": "test"})
-    print(f"\nstatus 用例里的对象: {id(post_response)}")
-    assert post_response.status_code == 200, f"实际状态码 {post_response.status_code}"
-
-
-def test_post_echo(post_response):
-    """验证发送的数据能原样回显"""
-    # response = requests.post("https://httpbin.org/post", json={"username": "test"})
-    print(f"echo 用例里的对象: {id(post_response)}")
-    body = post_response.json()
-    assert body["json"]["username"] == "test", f"实际回显 {body['json']}"
-
-
-@pytest.mark.parametrize("form_value,expected", [
-    pytest.param("1", "1",id="数字"),
-    pytest.param("2", "2",id="数字"),
-    pytest.param("abc", "abc",id="字母"),
-])
-def test_post_form(form_value, expected):
-    # 验证data= 传参走的是表单格式
-    response=requests.post("https://httpbin.org/post", data={"a": form_value})
-    body=response.json()
-    assert body["form"]["a"]==expected,f"实际回显{body['form']['a']}"
-    assert "x-www-form-urlencoded" in body["headers"]["Content-Type"]
-    
-'''
-
-def test_post_json(api):
-    # 验证状态码是200
-    res=api.post_json({"username":"test"})
-    assert res.status_code==200,f"实际状态码：{res.status_code}"
-    
-def test_post_echo(api):
-    # 验证发送的数据能原样回显
-    res=api.post_json({"username":"test"})
-    body=res.json()
-    assert body["json"]["username"]=="test",f"实际回显：{body['json']}"
-    
+import json
 
 
 def load_form_cases():
-    # 从yaml数据文件读取表单接口的测试数据
-    with open("data/httpbin_data.yaml","r",encoding='utf-8') as f:
-        raw=yaml.safe_load(f)["post_form_cases"] #取出列表
-        
-    cases=[]
+    """从 yaml 数据文件读取表单接口的测试数据"""
+    with open("data/httpbin_data.yaml", "r", encoding="utf-8") as f:
+        raw = yaml.safe_load(f)["post_form_cases"]
+
+    cases = []
     for item in raw:
         cases.append(
-            pytest.param(item["form_value"],item["excepted"],id=item["case_name"])
+            pytest.param(item["form_value"], item["excepted"], id=item["case_name"])
         )
     return cases
-@pytest.mark.parametrize("form_value,expected", load_form_cases())
-def test_post_form(api,form_value,expected):
-    # 参数化， 传参走的是表单格式
-    res=api.post_form({"a":form_value})
-    body=res.json()
-    assert body["form"]["a"]==expected,f"实际回显：{body['form']['a']}"
+
+
+@allure.feature("httpbin 接口")
+@allure.story("POST /post 接口")
+class TestHttpbinPost:
+    """POST 接口测试集"""
+
+    @allure.title("验证状态码返回 200")
+    def test_post_json(self, api):
+        # 验证状态码是200
+        with allure.step("构造请求数据"):
+            payload={"username":"test"}
+            allure.attach(json.dumps(payload,ensure_ascii=False,indent=2),
+                          name="请求参数",attachment_type=allure.attachment_type.JSON)
+        with allure.step("发送POST请求"):
+            res=api.post_json(payload)
+            allure.attach(res.text,
+                          name="响应内容", attachment_type=allure.attachment_type.JSON)
+        with allure.step("断言状态码是200"):
+            assert res.status_code==200,f"实际状态码:{res.status_code}"
+        # res = api.post_json({"username": "test"})
+        # assert res.status_code == 200, f"实际状态码：{res.status_code}"
+
+    @allure.title("验证请求数据能原样回显")
+    def test_post_echo(self, api):
+        # 验证发送的数据能原样回显
+        with allure.step("构造请求数据"):
+            payload={"username":"test"}
+        with allure.step("发送POST请求"):
+            res=api.post_json(payload)
+        with allure.step("断言回显"):
+            body = res.json()
+            assert body["json"]["username"] == "test", f"实际回显：{body['json']}"
+        # res = api.post_json({"username": "test"})
+        # body = res.json()
+        # assert body["json"]["username"] == "test", f"实际回显：{body['json']}"
+
+    @allure.title("验证表单格式传参：{form_value}")
+    @pytest.mark.parametrize("form_value,expected", load_form_cases())
+    def test_post_form(self, api, form_value, expected):
+        # 参数化，传参走的是表单格式
+        with allure.step("构造请求参数"):
+            payload={"a":form_value}
+            allure.attach(json.dumps(payload,ensure_ascii=False,indent=2),
+                                      name="请求参数",attachment_type=allure.attachment_type.JSON)
+        with allure.step("发送post请求"):
+            res=api.post_form(payload)
+            allure.attach(res.text,
+                                      name="响应内容", attachment_type=allure.attachment_type.JSON)
+        with allure.step("断言回显"):
+            body = res.json()
+            assert body["form"]["a"] == expected, f"实际回显：{body['form']['a']}"
+        # res = api.post_form({"a": form_value})
+        # body = res.json()
+        # assert body["form"]["a"] == expected, f"实际回显：{body['form']['a']}"
+        # 上面注释掉的三行是原来的用法，不带调用详情
